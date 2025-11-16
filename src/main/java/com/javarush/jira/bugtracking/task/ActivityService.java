@@ -8,6 +8,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 
 import static com.javarush.jira.bugtracking.task.TaskUtil.getLatestValue;
@@ -72,5 +75,44 @@ public class ActivityService {
                 task.setTypeCode(latestType);
             }
         }
+    }
+    @Transactional(readOnly = true)
+    public Duration getTimeInProgress(Task task) {
+        List<Activity> activities = handler.getRepository()
+                .findAllByTaskIdOrderByUpdatedDesc(task.id());
+
+        LocalDateTime start = findStatusTime(activities, "in_progress");
+        LocalDateTime end = findStatusTime(activities, "ready_for_review");
+
+        if (start == null || end == null) return Duration.ZERO;
+
+        return Duration.between(start, end);
+    }
+
+    /**
+     * Час перебування задачі на тестуванні (ready_for_review → done)
+     */
+    @Transactional(readOnly = true)
+    public Duration getTimeOnTesting(Task task) {
+        List<Activity> activities = handler.getRepository()
+                .findAllByTaskIdOrderByUpdatedDesc(task.id());
+
+        LocalDateTime start = findStatusTime(activities, "ready_for_review");
+        LocalDateTime end = findStatusTime(activities, "done");
+
+        if (start == null || end == null) return Duration.ZERO;
+
+        return Duration.between(start, end);
+    }
+
+    /**
+     * Допоміжний метод: повертає перший timestamp для конкретного статусу
+     */
+    private LocalDateTime findStatusTime(List<Activity> activities, String statusCode) {
+        return activities.stream()
+                .filter(a -> statusCode.equals(a.getStatusCode()))
+                .min(Comparator.comparing(Activity::getUpdated)) // перший по часу
+                .map(Activity::getUpdated)
+                .orElse(null);
     }
 }
