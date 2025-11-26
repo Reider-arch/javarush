@@ -36,7 +36,7 @@ values ('user@gmail.com', '{noop}password', 'userFirstName', 'userLastName', 'us
 
 -- 0 DEV
 -- 1 ADMIN
--- 2 MANAGER
+-- 2 MANAGERя
 
 insert into USER_ROLE (USER_ID, ROLE)
 values (1, 0),

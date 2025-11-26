@@ -20,7 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.javarush.jira.bugtracking.ObjectType.TASK;
 import static com.javarush.jira.bugtracking.task.TaskUtil.fillExtraFields;
@@ -140,4 +142,31 @@ public class TaskService {
             throw new DataConflictException(String.format(assign ? CANNOT_ASSIGN : CANNOT_UN_ASSIGN, userType, task.getStatusCode()));
         }
     }
+    @Transactional
+    public Set<String> addTags(long taskId, Set<String> newTags) {
+        Task task = handler.getRepository().getExisted(taskId);
+        Set<String> updatedTags = new java.util.HashSet<>(task.getTags());
+        updatedTags.addAll(newTags);
+        task.setTags(updatedTags);
+        handler.getRepository().save(task);
+        return task.getTags();
+    }
+    @Transactional
+    public Set<String> removeTags(long taskId, Set<String> tagsToRemove) {
+        Task task = handler.getRepository().getExisted(taskId);
+        Set<String> updatedTags = new java.util.HashSet<>(task.getTags());
+        updatedTags.removeAll(tagsToRemove);
+        task.setTags(updatedTags);
+        handler.getRepository().save(task);
+        return updatedTags;
+    }
+
+    @Transactional
+    public Set<String> getTags(long taskId) {
+        Task task = handler.getRepository().getExisted(taskId);
+        return task.getTags();
+
+    }
+
+
 }

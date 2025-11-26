@@ -1,8 +1,45 @@
-spring.cache.type: none
+# src/test/resources/application-test.yml
 spring:
-  init:
-    mode: always
+  # Вимикаємо кеш для тестів, якщо це потрібно
+  cache.type: none
+
+  # Налаштування для H2 in-memory
   datasource:
-    url: jdbc:postgresql://localhost:5433/jira-test
-    username: jira
-    password: JiraRush
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1 # In-memory H2 database
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    show-sql: true # Показати SQL-запити у логах тестів
+    open-in-view: false
+
+    # Для H2 використовуємо create-drop, щоб кожен тест мав чисту БД
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect # Вказуємо діалект H2
+
+  # Ініціалізація бази даних H2 за допомогою скриптів
+  sql:
+    init:
+      mode: always # Завжди виконувати скрипти ініціалізації
+      schema-locations: classpath:db/h2/schema.sql # Шлях до скрипту створення схеми H2
+      data-locations: classpath:db/h2/data.sql # Шлях до скрипту заповнення даних H2
+
+  # Вимикаємо Liquibase для тестового профілю з H2
+  liquibase:
+    enabled: false
+
+  # Перевизначаємо ініціалізацію, яку ви надіслали
+  init:
+    mode: never # Ми використовуємо spring.sql.init для H2, тому тут може бути never або його взагалі не потрібно, якщо це не глобальне налаштування.
+
+# Залишаємо рівні логування такими, як у вас в основному файлі, або змінюємо, якщо потрібно для тестів
+logging:
+  level:
+    root: WARN
+    com.javarush.jira: DEBUG
+    com.javarush.jira.common.config.MvcConfig: WARN
+    org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver: DEBUG
+
+# ... Можливо, інші специфічні налаштування для тестів, які ви хочете перевизначити ...
